@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f14" />
+  <title>Laberinto Optimizado (by Mathias.S.M)</title>
+  <style>
+    /* ======= Estilos de (SIN CAMBIOS) ======= */
+    :root {
+      --bg: #0b0f14;
+      --fg: #e9eef3;
+      --surface: #121821;
+      --muted: #96a1b3;
+      --accent: #00d1b2;
+      --accent-ink: #052e2a;
+      --border: #2b3b55;
+      --btn: #172133;
+      --btn-active: #1e2a42;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--fg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    img { max-width: 100%; display: block; }
+    button, input, select { font: inherit; }
+    a, button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px env(safe-area-inset-right) calc(16px + env(safe-area-inset-bottom)) env(safe-area-inset-left);
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 0;
+    }
+    h1 { margin: 0; font-size: clamp(1.25rem, 1rem + 1.2vw, 1.75rem); }
+    .sub { color: var(--muted); font-size: 0.9rem; }
+
+    .row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+
+    /* ======= Tarjetas / formularios ======= */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.25);
+    }
+
+    .form-card h2 { margin: 4px 0 12px; font-size: 1.05rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 520px) { .form-grid { grid-template-columns: repeat(2, 1fr); } }
+    .full { grid-column: 1/-1; }
+
+    label { display: block; font-size: 0.9rem; margin-bottom: 6px; color: var(--muted); }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #0f1520;
+      color: var(--fg);
+      border-radius: 10px;
+      padding: 12px 14px;
+      outline: none;
+    }
+    input::placeholder { color: #8ca0b3; }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,209,178,.12); }
+
+    fieldset { border: 0; padding: 0; margin: 0; }
+    legend { font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
+    .radio-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .radio-row label { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+
+    .btn-primary, .btn-secondary {
+      padding: 12px 14px; border-radius: 10px; border: 1px solid transparent; cursor: pointer; font-weight: 700;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-ink); }
+    .btn-secondary { background: #1f2937; color: var(--fg); border-color: var(--border); }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    /* ======= Área de juego ======= */
+    .game-shell {
+      position: relative;
+      background: #0f1520;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 1/1; /* cuadrado por defecto */
+    }
+    canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+
+    .victory {
+      position: absolute; inset: 0; display: none; place-items: center; text-align: center; padding: 16px;
+      background: rgba(0,0,0,.8); /* Fondo más oscuro para visibilidad */
+    }
+    .victory-inner { display: grid; gap: 12px; justify-items: center; 
+      background: var(--surface); border-radius: 14px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .victory img { max-width: 80%; height: auto; border-radius: 10px; border: 2px solid var(--accent); } /* Añadido borde a la imagen */
+
+    /* ======= Controles táctiles (D-Pad) ======= */
+    .controls { position: sticky; up: 0; margin-top: 1px; padding-top: 0px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.25)); }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 64px);
+      grid-template-rows: repeat(3, 64px);
+      justify-content: center;
+      gap: 8px;
+      user-select: none;
+      touch-action: none; /* mejor respuesta táctil */
+    }
+    @media (max-width: 380px) {
+      .dpad { grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); }
+    }
+
+    .btn-pad {
+      display: flex; align-items: center; justify-content: center;
+      background: var(--btn);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      border-radius: 12px; min-width: 44px; min-height: 44px;
+      font-size: 1.25rem; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .btn-pad:active { transform: scale(.98); background: var(--btn-active); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Laberinto Optimizado (v10 by Mathias.S.M)</h1>
+        <div class="sub">Versión adaptada a móvil: controles táctiles, botones grandes y guardado local.</div>
+      </div>
+      <div class="row">
+		<button class="btn-secondary" id="btnRestart" type="button" title="Reiniciar">Reiniciar Partida</button> 
+        <button class="btn-danger" id="btnNewMaze" type="button" title="Nuevo Laberinto">Nuevo Laberinto</button>
+      </div>
+    </header>
+
+    <form id="playerForm" class="card form-card" novalidate>
+      <h2>Datos del jugador</h2>
+      <div class="form-grid">
+        <div class="full">
+          <label for="name">Nombre</label>
+          <input id="name" name="name" type="text" placeholder="Tu nombre" autocomplete="name" required />
+        </div>
+        <fieldset class="full">
+          <legend>Sexo</legend>
+          <div class="radio-row" role="radiogroup" aria-label="Sexo">
+            <label><input type="radio" name="sex" value="masculino" required /> Masculino</label>
+            <label><input type="radio" name="sex" value="femenino" /> Femenino</label>
+            <label><input type="radio" name="sex" value="Otro" /> Otro</label>
+            <label><input type="radio" name="sex" value="Prefiero no decirlo" /> Prefiero no decirlo</label>
+          </div>
+        </fieldset>
+        <div>
+          <label for="age">Edad</label>
+          <input id="age" name="age" type="number" inputmode="numeric" pattern="[0-9]*" min="1" max="120" placeholder="Edad" />
+        </div>
+        <div class="full row" style="justify-content:flex-end">
+          <button class="btn-primary" type="submit">Guardar y comenzar</button>
+        </div>
+      </div>
+    </form>
+
+    <section class="card game-shell" id="gameShell" aria-label="Área de juego" tabindex="-1">
+      <canvas id="gameCanvas" width="483" height="483" aria-hidden="true"></canvas>
+
+      <div class="victory" id="victoryOverlay" aria-hidden="true" role="dialog" aria-labelledby="victoryTitle">
+        <div class="victory-inner">
+          <h3 id="victoryTitle">¡Has ganado!</h3>
+          <p id="victoryMessage"></p> <div class="row">
+            <button class="btn-primary" id="playAgainBtn" type="button">Siguiente Nivel</button>
+            <button class="btn-secondary" id="shareBtn" type="button">Compartir</button>
+          </div>
+		  <img id="victoryImage" src="" alt="Imagen de victoria" />
+        </div>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Controles táctiles">
+      <div class="dpad" id="dpad">
+        <span></span>
+        <button class="btn-pad" data-dir="U" aria-label="Arriba">↑</button> <span></span>
+
+        <button class="btn-pad" data-dir="L" aria-label="Izquierda">←</button> <span></span>
+        <button class="btn-pad" data-dir="R" aria-label="Derecha">→</button> <span></span>
+        <button class="btn-pad" data-dir="D" aria-label="Abajo">↓</button> <span></span>
+      </div>
+    </section>
+
+    <p class="sub" style="text-align:center"> Usa <strong>Reiniciar</strong> para volver a Inicio. o <strong>Nueva Laberinto</strong> o si quieres empezar otra Partida Diferente</p>
+	<p class="sub" style="text-align:center"> <strong>Cuidado</strong> con los <strong>guardias</strong> . <strong>Las Flechas </strong> te mandarán lejos. Pudes usarlas a tu favor. Las <strong>Casillas Amarillas</strong> te frenan</p>
+  </div>
+
+<script>
+    // ====================================================================
+    // ======= CONFIGURACIÓN BASE DE (Adaptada) =======
+    // ====================================================================
+    let canvas = document.getElementById('gameCanvas');
+    let ctx = null; // Se inicializa en fitCanvasToContainer
+    let cellSize = 0; // Calculada dinámicamente
+	let currentLevel = 1; // Valor por defecto
+    // ... (código de fitCanvasToContainer sin cambios mayores)
+
+    function fitCanvasToContainer(canvas) {
+      const ratio = window.devicePixelRatio || 1;
+      const { width, height } = canvas.getBoundingClientRect();
+      // Aseguramos que sea cuadrado y tenga dimensiones lógicas
+      const size = Math.min(width, height); 
+      const displaySize = Math.floor(size*ratio); 
+	  console.log(size,displaySize)
+      
+      // El canvas debe ser cuadrado, su lado debe ser divisible por las columnas (21)
+      const logicalSize = 504; // Un tamaño base para calcular la cellSize inicial
+      const displayWidth = logicalSize;
+      const displayHeight = logicalSize;
+      
+      if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+		console.log(displayWidth,displayHeight)
+        // La celda se calcula con las columnas visibles (VIEWPORT_CELLS_W)
+        cellSize = displayWidth / VIEWPORT_CELLS_W; 
+      }
+      
+      const context = canvas.getContext('2d');
+      // Escala para ajustar el contenido al tamaño visual (CSS size)
+      //context.setTransform(size / displayWidth, 0, 0, size / displayHeight, 0, 0); 
+	  context.setTransform(1, 0, 0, 1, 0, 0);
+      ctx = context;
+      
+      return ctx;
+    }
+
+    function hideVictory() {
+      const overlay = document.getElementById('victoryOverlay');
+      overlay.style.display = 'none';
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+function getLevelConfig(level) {
+  const baseRows = 21;
+  const baseCols = 21;
+  const maxRows = baseRows + 10 * 4; // hasta nivel 5
+  const extraCols = level > 5 ? (level - 5) * 10 : 0;
+  const rows = level <= 5 ? baseRows + (level - 1) * 10 : maxRows;
+  const cols = baseCols + extraCols;
+
+  const arrows = 10+(level) * 20;
+  const guards = 1+(level) * 1;
+
+  return { rows, cols, arrows, guards };
+}
+
+    // ====================================================================
+    // 1. GESTOR DE DATOS DE JUGADOR (PlayerManager) - Sin cambios
+
+const PlayerManager = {
+  loadPlayerData: function() {
+    const data = localStorage.getItem("laberinto:v1:user");
+    const levelData = localStorage.getItem("laberinto:v1:level");
+
+    if (data) {
+      try {
+        const parsedData = JSON.parse(data);
+        if (parsedData.name && parsedData.sex) {
+          gameState.playerData = {
+            name: parsedData.name,
+            sex: parsedData.sex,
+            age: parseInt(parsedData.age) || 0
+          };
+
+      // Cargar nivel desde localStorage
+          const parsedLevel = parseInt(levelData);
+          level = isNaN(parsedLevel) ? 1 : parsedLevel;
+          currentLevel = level;
+
+          return true;
+        }
+      } catch (e) {
+        console.error("Datos de jugador corruptos.");
+      }
+    }
+
+    // Si no hay datos, nivel por defecto
+    level = 1;
+    currentLevel = 1;
+    return false;
+  },
+      
+      saveAndStartGame: function(name, sex, age) {
+        gameState.playerData = { name, sex, age: parseInt(age) || 0 };
+        localStorage.setItem("laberinto:v1:user", JSON.stringify(gameState.playerData));
+        document.getElementById('playerForm').classList.add('hidden');
+        Game.init();
+        document.getElementById('gameShell').focus();
+        resize();
+      }
+    };
+
+    // ====================================================================
+
+    // CONFIGURACIÓN GLOBAL Y CONSTANTES
+	let level = localStorage.getItem("laberinto:v1:level");
+    currentLevel = level;
+	const config = getLevelConfig(currentLevel);
+    const rows = config.rows;
+    const cols = config.cols;
+    // const canvas, ctx, cellSize -> Ahora son variables let arriba y se calculan en fitCanvasToContainer
+    const START = [1, 1];
+    const END = [rows - 2, cols - 2];
+    const WALL_COLOR = "black";
+    const PATH_COLOR = "white";
+    const PLAYER_COLOR = "purple";
+    const ARROW_COUNT = config.arrows;
+	const GUARD_COUNT = config.guards;
+
+    // Constantes para el Viewport (Cámara) -> ¡NUEVAS CONSTANTES PARA LA CÁMARA!
+    const VIEWPORT_CELLS_W = 21; // 
+    const VIEWPORT_CELLS_H = 21; //  (Para mantener la vista cuadrada)
+    
+    // Estado del juego
+    let gameState = {
+        player: null, 
+        animating: false,
+        pathQueue: [], 
+        progress: 0,
+        lastTime: 0,
+        playerData: {},
+        isGameRunning: false,
+        animationFrameId: null // Para manejar el bucle de requestAnimationFrame
+    };
+
+    // 2. GENERACIÓN DEL LABERINTO Y LÓGICA DE CELDAS (Maze) - Sin cambios
+
+    const Maze = {
+        wallSet: new Set(),
+        visited: new Set(),
+        data: null,
+        guards: [], 
+
+        init: function() {
+          this.generateMap();
+          GuardManager.generateGuards(GUARD_COUNT, 28); 
+        },
+
+        generateMap: function() {
+          let path = null;
+          let attempts = 0;
+          const MAX_ATTEMPTS = 5; 
+
+          while (path === null && attempts < MAX_ATTEMPTS) {
+              attempts++;
+              this.wallSet.clear();
+              this.visited.clear();
+              this.guards = [];
+              
+              for (let r = 0; r < rows; r++) {
+                  for (let c = 0; c < cols; c++) {
+                      this.wallSet.add(`${r},${c}`);
+                  }
+              }
+              this.data = {
+                  start: START,
+                  end: END,
+                  arrows: this.generateArrows(rows, cols, ARROW_COUNT, START, END),
+                  yellowStops: []
+              };
+              this.data.yellowStops = this.generateYellowStops(this.data.arrows, rows, cols);
+
+              this.liberarCeldasEspeciales();
+              this.carve(this.data.start[0], this.data.start[1]);
+              this.liberarTrayectoriasDeFlechas();
+
+              path = this.findPathWithBreaking(START, END, rows, cols);
+              if (path === null) {
+                  console.warn(`Intento ${attempts} fallido. Regenerando laberinto...`);
+              }
+          }
+
+          if (path === null) {
+              console.error(`ERROR CRÍTICO: No se pudo generar un laberinto jugable después de ${MAX_ATTEMPTS} intentos.`);
+          }
+        },
+
+        liberarCeldasEspeciales: function() {
+            this.data.yellowStops.forEach(([r, c]) => this.wallSet.delete(`${r},${c}`));
+            Object.keys(this.data.arrows).forEach(key => this.wallSet.delete(key));
+            this.wallSet.delete(`${this.data.start[0]},${this.data.start[1]}`);
+            this.wallSet.delete(`${this.data.end[0]},${this.data.end[1]}`);
+        },
+
+        carve: function(r, c) {
+            const key = `${r},${c}`;
+            this.visited.add(key);
+            this.wallSet.delete(key);
+            const directions = [
+                [-2, 0], [2, 0], [0, -2], [0, 2]
+            ].sort(() => Math.random() - 0.5);
+
+            for (const [dr, dc] of directions) {
+                const newR = r + dr;
+                const newC = c + dc;
+                const newKey = `${newR},${newC}`;
+
+                if (
+                    newR > 0 && newR < rows - 1 &&
+                    newC > 0 && newC < cols - 1 &&
+                    !this.visited.has(newKey)
+                ) {
+                    const wallR = r + dr / 2;
+                    const wallC = c + dc / 2;
+                    this.wallSet.delete(`${wallR},${wallC}`);
+                    this.carve(newR, newC);
+                }
+            }
+        },
+        
+        liberarTrayectoriasDeFlechas: function() {
+          const getOffset = (dir) => {
+              switch (dir) { case "U": return [-1, 0]; case "D": return [1, 0]; case "L": return [0, -1]; case "R": return [0, 1]; default: return [0, 0]; }
+          };
+          const isYellowStop = (r, c) => this.isYellow(r, c); 
+
+
+          for (const key in this.data.arrows) {
+              let [r, c] = key.split(',').map(Number);
+              const dir = this.data.arrows[key]; 
+              const [dr, dc] = getOffset(dir); 
+
+              for (let i = 0; i < 4; i++) {
+                  let nr = r + dr;
+                  let nc = c + dc;
+                  const nextKey = `${nr},${nc}`;
+
+                  if (nr <= 0 || nr >= rows - 1 || nc <= 0 || nc >= cols - 1) break;
+
+                  this.wallSet.delete(nextKey);
+                  
+                  if (this.data.arrows[nextKey] || isYellowStop(nr, nc)) break;
+
+                  r = nr; 
+                  c = nc;
+              }
+          }      
+        },
+        generateArrows: function() {
+            const directions = ["U", "D", "L", "R"];
+            const arrows = {};
+            const getOffset = (dir) => {
+                switch (dir) { case "U": return [-1, 0]; case "D": return [1, 0]; case "L": return [0, -1]; case "R": return [0, 1]; }
+            };
+            const pointsEqual = (a, b) => a[0] === b[0] && a[1] === b[1];
+
+            for (let i = 0; i < ARROW_COUNT * 5; i++) {
+                const r = Math.floor(Math.random() * (rows - 2)) + 1;
+                const c = Math.floor(Math.random() * (cols - 2)) + 1;
+                const key = `${r},${c}`;
+                const dir = directions[Math.floor(Math.random() * directions.length)];
+                const [dr, dc] = getOffset(dir);
+
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr <= 0 || nr >= rows - 1 || nc <= 0 || nc >= cols - 1) continue;
+
+                let conflict = false;
+                for (let d = 1; d <= 4; d++) {
+                    const tr = r + dr * d;
+                    const tc = c + dc * d;
+                    if (pointsEqual([tr, tc], START) || pointsEqual([tr, tc], END)) { conflict = true; break; }
+                    const opposite = { "U": "D", "D": "U", "L": "R", "R": "L" };
+                    if (arrows[`${tr},${tc}`] === opposite[dir]) { conflict = true; break; }
+                }
+
+                if (!arrows[key] && !conflict) {
+                    arrows[key] = dir;
+                }
+                if (Object.keys(arrows).length >= ARROW_COUNT) break;
+            }
+            return arrows;
+        },
+        generateYellowStops: function(arrows, rows, cols) {
+            const yellowStops = new Set();
+            const getOffset = (dir) => {
+                switch (dir) { case "U": return [-1, 0]; case "D": return [1, 0]; case "L": return [0, -1]; case "R": return [0, 1]; default: return [0, 0]; }
+            };
+
+            for (const [key, dir] of Object.entries(arrows)) {
+                const [r, c] = key.split(",").map(Number);
+                const [dr, dc] = getOffset(dir);
+
+                let arrowFound = false;
+                for (let d = 1; d <= 4; d++) {
+                    const nr = r + dr * d;
+                    const nc = c + dc * d;
+                    if (nr <= 0 || nr >= rows - 1 || nc <= 0 || nc >= cols - 1) break;
+                    if (arrows[`${nr},${nc}`]) { arrowFound = true; break; }
+                }
+
+                if (!arrowFound) {
+                    let dist = Math.floor(Math.random() * 3) + 1;
+                    let yr = r + dr * dist;
+                    let yc = c + dc * dist;
+                    yr = Math.max(1, Math.min(rows - 2, yr));
+                    yc = Math.max(1, Math.min(cols - 2, yc));
+                    const yellowKey = `${yr},${yc}`;
+                    if (!arrows[yellowKey]) { yellowStops.add(yellowKey); }
+                }
+            }
+            return Array.from(yellowStops).map(s => s.split(",").map(Number));
+        },
+        isWall: function(r, c) {
+            if (r < 0 || r >= rows || c < 0 || c >= cols) return true;
+            return this.wallSet.has(`${r},${c}`);
+        },
+        isYellow: function(r, c) {
+            if (!this.data || !this.data.yellowStops) return false;
+            return this.data.yellowStops.some(([yr, yc]) => yr === r && yc === c);
+        },
+        findPathWithBreaking: function(start, end, rows, cols, maxBreaks = 10) {
+            const tempWallSet = new Set(this.wallSet);
+            let path = this._findPath(start, end, tempWallSet);
+            if (path) return path;
+
+            const breakableWalls = Array.from(tempWallSet).map(key => key.split(",").map(Number))  .filter(([r, c]) => 
+                r > 0 && r < rows - 1 && 
+                c > 0 && c < cols - 1
+            );
+            
+            for (let i = 0; i < maxBreaks; i++) {
+                if (breakableWalls.length === 0) break;
+                const idx = Math.floor(Math.random() * breakableWalls.length);
+                const [r, c] = breakableWalls.splice(idx, 1)[0];
+                const key = `${r},${c}`;
+                
+                this.wallSet.delete(key);
+                tempWallSet.delete(key); 
+                path = this._findPath(start, end, this.wallSet);
+
+                if (path) return path;
+            }
+            return null;
+        },
+        _findPath: function(start, end, currentWallSet) {
+            const queue = [[start]];
+            const visited = new Set([`${start[0]},${start[1]}`]);
+            const arrows = this.data.arrows;
+            const isWall = (r, c) => currentWallSet.has(`${r},${c}`);
+            const isYellow = (r, c) => this.isYellow(r, c);
+
+            while (queue.length > 0) {
+                const currentPath = queue.shift();
+                let [r, c] = currentPath[currentPath.length - 1];
+
+                if (arrows[`${r},${c}`]) {
+                    const arrowPath = Game.Player.followArrowPath(r, c, arrows, isWall, isYellow);
+                    const [nr, nc] = arrowPath[arrowPath.length - 1];
+                    const key = `${nr},${nc}`;
+                    
+                    if (!visited.has(key)) {
+                        visited.add(key);
+                        const newPath = currentPath.concat(arrowPath.slice(1));
+                        if (nr === end[0] && nc === end[1]) return newPath;
+                        queue.push(newPath);
+                    }
+                    [r, c] = [nr, nc];
+                }
+
+                const directions = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]];
+
+                for (const [nr, nc] of directions) {
+                    const key = `${nr},${nc}`;
+                    if (isWall(nr, nc) || visited.has(key)) continue;
+                    
+                    visited.add(key);
+                    const newPath = currentPath.concat([[nr, nc]]);
+                    if (nr === end[0] && nc === end[1]) return newPath;
+                    queue.push(newPath);
+                }
+            }
+            return null;
+        },
+    };
+
+    // 3. RENDERIZADO (Renderer) -> ¡MODIFICADO PARA SOPORTAR LA CÁMARA!
+    const Renderer = {
+        // Variables para almacenar la posición de la cámara (se inicializan en draw)
+        viewR: 0,
+        viewC: 0,
+
+        draw: function() {
+            if (!ctx || !Array.isArray(gameState.player)) return;
+
+            // 1. Calcular el punto de inicio de la vista (top-left cell index)
+            const playerR = gameState.player[0];
+            const playerC = gameState.player[1];
+
+            // Centro de la vista (ej. índice 10): Mantiene al jugador en el centro
+            let viewR = Math.floor(playerR - VIEWPORT_CELLS_H/2);
+            let viewC = Math.floor(playerC - VIEWPORT_CELLS_W/2);
+			if(viewR>rows-21){viewR = rows-21};
+		    if(viewC>cols-21){viewC = cols-21};
+
+            // 2. Limitar el desplazamiento (panning limits)
+            viewR = Math.max(0, viewR);
+            viewC = Math.max(0, viewC);
+            
+            // Limite inferior/derecho
+            viewR = Math.min(rows, viewR);//- VIEWPORT_CELLS_H
+            viewC = Math.min(cols, viewC);//- VIEWPORT_CELLS_W
+
+            // Si el laberinto es más pequeño que el viewport, forzar a 0 (ej. cols 21 < VIEWPORT_CELLS_W 21)
+            if (rows < VIEWPORT_CELLS_H) viewR = 0;
+            if (cols < VIEWPORT_CELLS_W) viewC = 0;
+            
+            // Almacenar viewR y viewC para dibujar el jugador y los guardias
+            this.viewR = viewR;
+            this.viewC = viewC;
+            
+            // Limpiar el canvas
+            const logicalWidth = VIEWPORT_CELLS_W * cellSize;
+            const logicalHeight = VIEWPORT_CELLS_H * cellSize;
+            ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+
+            // 3. Iterar solo sobre las celdas visibles
+            for (let r_offset = 0; r_offset < VIEWPORT_CELLS_H; r_offset++) {
+                for (let c_offset = 0; c_offset < VIEWPORT_CELLS_W; c_offset++) {
+                    
+                    const r = viewR + r_offset; // Coordenada real del laberinto
+                    const c = viewC + c_offset; // Coordenada real del laberinto
+                    
+                    if (r >= rows || c >= cols) continue; // Si está fuera del laberinto, saltar
+                    
+                    const key = `${r},${c}`;
+                    
+                    // Dibujar en coordenadas relativas a la vista (r_offset, c_offset)
+                    const x = c_offset * cellSize; 
+                    const y = r_offset * cellSize; 
+
+                    // Fondo
+                    ctx.fillStyle = Maze.wallSet.has(key) ? WALL_COLOR : PATH_COLOR;
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                    ctx.strokeStyle = "gray";
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+
+                    // Yellow stops
+                    if (Maze.isYellow(r, c)) {
+                        ctx.fillStyle = "yellow";
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+
+                    // Flechas
+                    if (Maze.data && Maze.data.arrows[key]) {
+                        ctx.fillStyle = "blue";
+                        ctx.font = `${cellSize * 0.8}px 'Segoe UI Symbol', 'Arial Unicode MS', sans-serif`;
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        const arrow = { "L": "←", "R": "→", "U": "↑", "D": "↓" }[Maze.data.arrows[key]];
+                        ctx.fillText(arrow, x + cellSize / 2, y + cellSize / 2);
+                    }
+
+                    // Start / End
+                    if (r === START[0] && c === START[1]) {
+                        ctx.fillStyle = "green";
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+                    if (r === END[0] && c === END[1]) {
+                        ctx.fillStyle = "red";
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+                }
+            }
+        },
+
+        // drawPlayer ahora recibe las coordenadas REALES (interpoladas) del laberinto
+        drawPlayer: function(r, c) { 
+            if (!ctx || this.viewR === undefined || this.viewC === undefined) return;
+            
+            // Coordenadas relativas a la vista: (r_real - viewR)
+            const x = (c - this.viewC) * cellSize; 
+            const y = (r - this.viewR) * cellSize;
+            
+            ctx.fillStyle = PLAYER_COLOR;
+            ctx.beginPath();
+            ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize / 3, 0, 2 * Math.PI);
+            ctx.fill();
+        },
+
+        // drawGuards ahora usa las coordenadas REALES (interpoladas)
+        drawGuards: function() {
+            if (!Array.isArray(Maze.guards) || !ctx || this.viewR === undefined || this.viewC === undefined) return; 
+            
+            for (let guard of Maze.guards) {
+                
+                if (guard.path.length <= 1) continue; 
+
+                const current = guard.path[guard.positionIndex];
+                const nextIndex = (guard.positionIndex + guard.direction); 
+                const next = guard.path[nextIndex]; 
+                
+                const t = guard.progress;
+                
+                let gr = current[0];
+                let gc = current[1];
+                
+                if (next) {
+                  gr = current[0] + (next[0] - current[0]) * t;
+                  gc = current[1] + (next[1] - current[1]) * t;
+                } else {
+                    gr = current[0];
+                    gc = current[1];
+                }
+
+                // Dibujar en coordenadas relativas a la vista: (g_real - viewR)
+                const x = (gc - this.viewC) * cellSize;
+                const y = (gr - this.viewR) * cellSize;
+
+                ctx.fillStyle = guard.color;
+                ctx.beginPath();
+                ctx.rect(x + 5, y + 5, cellSize - 10, cellSize - 10);
+                ctx.fill();
+            }
+        }
+    };
+
+
+    // 4. LÓGICA DEL JUGADOR (Player) - Sin cambios
+
+    const Player = {
+      movePlayer: function(dr, dc) {
+        if (gameState.animating || !Array.isArray(gameState.player) || !gameState.isGameRunning) return; 
+
+        const [r, c] = gameState.player;
+        const newR = r + dr;
+        const newC = c + dc;
+
+        if (!Maze.isWall(newR, newC)) {
+          
+          const arrowPath = this.getArrowPath(newR, newC); 
+          
+          if (arrowPath.length > 1) { 
+            gameState.pathQueue = [[r, c]].concat(arrowPath);
+            gameState.animating = true;
+            gameState.progress = 0;
+            
+          } else {
+            gameState.player = [newR, newC];
+            Game.checkWin(); 
+          }
+        }
+      },
+
+      getArrowPath: function(startR, startC) {
+        let path = [[startR, startC]];
+        
+        if (!Maze.data) return path;
+
+        let dir = Maze.data.arrows[`${startR},${startC}`];
+        if (!dir) return path;
+
+        path = this.followArrowPath(
+            startR, 
+            startC, 
+            Maze.data.arrows, 
+            Maze.isWall.bind(Maze), 
+            Maze.isYellow.bind(Maze)
+        );
+        return path;
+      },
+
+      followArrowPath: function(r, c, arrows, isWall, isYellow) {
+        let path = [[r, c]];
+        let dir = arrows[`${r},${c}`];
+        
+        if (!dir) return path;
+
+        const getOffset = (dir) => {
+            switch (dir) { case "U": return [-1, 0]; case "D": return [1, 0]; case "L": return [0, -1]; case "R": return [0, 1]; }
+        };
+
+        while (!isYellow(r, c)) {
+          const nextDir = arrows[`${r},${c}`];
+          if (nextDir) dir = nextDir;
+          if (!dir) break;
+
+          const [dr, dc] = getOffset(dir);
+          let nextR = r + dr;
+          let nextC = c + dc;
+
+          if (isWall(nextR, nextC)) break;
+
+          r = nextR;
+          c = nextC;
+          path.push([r, c]);
+        }
+        return path;
+      },
+      
+      animate: function(deltaTime) {
+          if (gameState.pathQueue.length > 1) {
+              const STEPS_PER_CELL = 200; // ms
+              gameState.progress += deltaTime / STEPS_PER_CELL;
+              
+              if (gameState.progress >= 1) {
+                  gameState.progress = 0;
+                  
+                  gameState.pathQueue.shift(); 
+                  
+                  if (gameState.pathQueue.length > 1) { 
+                     gameState.player = gameState.pathQueue[0];
+                  } else {
+                     gameState.player = gameState.pathQueue[0]; 
+                     gameState.pathQueue = [];
+                     gameState.animating = false;
+                     Game.checkWin(); 
+                  }
+              }
+          }
+      },
+      
+      // Ya no necesitamos getDrawCoords() para calcular píxeles, solo devolvemos las coordenadas de celda
+      getInterpolatedCoords: function() {
+        if (!Array.isArray(gameState.player)) { 
+             return { r: 0, c: 0 }; 
+        }
+        
+        if (gameState.pathQueue.length <= 1 || !gameState.animating) {
+            return { 
+              r: gameState.player[0], 
+              c: gameState.player[1] 
+            };
+        }
+        
+        const [startR, startC] = gameState.player; 
+        const [endR, endC] = gameState.pathQueue[1];
+        const t = gameState.progress;
+        
+        const r = startR + (endR - startR) * t;
+        const c = startC + (endC - startC) * t;
+        
+        return { r, c };
+      }
+    };
+
+
+    // 5. GESTOR DE GUARDIAS (GuardManager) - Sin cambios
+
+    const GuardManager = {
+      GUARD_MOVE_DURATION: 1000,
+      
+      generateGuards: function(numGuards = 3, pathLength = 8) {
+        const freeCells = [];
+        const guardColors = [
+  "red", "orange", "blue", "green", "purple", "black", "pink",
+  "yellow", "cyan", "magenta", "lime", "teal", "navy", "maroon",
+  "olive", "aqua", "fuchsia", "brown", "gold", "silver", "gray"
+];
+
+        for (let r = 1; r < rows - 1; r++) {
+          for (let c = 1; c < cols - 1; c++) {
+            const key = `${r},${c}`;
+            if (!Maze.wallSet.has(key) && !Maze.data.arrows[key] && !Maze.isYellow(r, c)) {
+             if (r >=1 && c >= 1){ // Evita que el guardia pase por START
+			 freeCells.push([r, c]);
+            }
+			}
+          }
+        }
+
+        Maze.guards = [];
+        for (let i = 0; i < numGuards; i++) {
+            if (freeCells.length === 0) break;
+            
+            const startIndex = Math.floor(Math.random() * freeCells.length);
+            const path = [freeCells.splice(startIndex, 1)[0]]; 
+            
+            let [r, c] = path[0];
+            for (let j = 0; j < pathLength - 1; j++) {
+                const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]].sort(() => Math.random() - 0.5);
+
+                let found = false;
+                for (const [dr, dc] of directions) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    const key = `${nr},${nc}`;
+                    if (!Maze.wallSet.has(key) && !path.some(([pr, pc]) => pr === nr && pc === nc)) {
+						if (nr !==1 && nc !== 1){ // Evita que el guardia pase por START
+                        path.push([nr, nc]);
+                        r = nr;
+                        c = nc;
+                        found = true;
+                        break;
+                    }
+					}
+                }
+                if (!found) break;
+            }
+
+            if (path.length > 1) { 
+                Maze.guards.push({
+                    path,
+                    positionIndex: 0,
+                    progress: 0,
+                    direction: 1, 
+                    color: guardColors[i % guardColors.length]
+                });
+            }
+        }
+      },
+
+      animate: function(deltaTime) {
+          if (!Array.isArray(Maze.guards)) return; 
+          
+          for (let guard of Maze.guards) {
+              if (guard.path.length <= 1) {
+                  guard.positionIndex = 0; 
+                  continue;
+              }
+
+              guard.progress += deltaTime / this.GUARD_MOVE_DURATION;
+
+              if (guard.progress >= 1) {
+                  guard.progress = 0;
+                  
+                  if (guard.direction === 1 && guard.positionIndex >= guard.path.length-1) {
+                      guard.direction = -1;
+					  guard.positionIndex=guard.path.length
+					  guard.progress = 0;
+                  } else if (guard.direction === -1 && guard.positionIndex === 0) {
+                      guard.direction = 1;
+					  guard.progress = 0;
+					  guard.positionIndex=-1
+					  
+                  }
+                  guard.positionIndex += guard.direction;
+              }
+          }
+      },
+
+      checkCollision: function() {
+        if (!Array.isArray(Maze.guards) || !Array.isArray(gameState.player)) return; 
+        
+        const { r: pr, c: pc } = Game.Player.getInterpolatedCoords();
+        
+        for (let guard of Maze.guards) {
+          if (guard.path.length <= 1) continue; 
+            
+          const current = guard.path[guard.positionIndex];
+          const nextIndex = (guard.positionIndex + guard.direction);
+          const next = guard.path[nextIndex];
+
+          const t = guard.progress;
+          
+          let gr = current[0];
+          let gc = current[1];
+          
+          if (next) {
+            gr = current[0] + (next[0] - current[0]) * t;
+            gc = current[1] + (next[1] - current[1]) * t;
+          }
+          
+          if (Math.abs(gr - pr) < 0.8 && Math.abs(gc - pc) < 0.8) {
+            alert("¡Has sido atrapado por un Guardia Rocket! Regresando al inicio...");
+            gameState.player = [...START];
+            gameState.animating = false;
+            gameState.pathQueue = [];
+            return;
+          }
+        }
+      }
+    };
+
+
+    // 6. GESTOR DEL JUEGO (GameManager) -> ¡MODIFICADO PARA USAR LAS COORDENADAS INTERPOLADAS!
+    const Game = {
+        PlayerManager,
+        Maze,
+        Renderer,
+        Player,
+        GuardManager,
+
+        init: function() {
+            Maze.init();
+            gameState.player = [...START]; 
+            gameState.isGameRunning = true;
+
+            // Inicialmente solo dibuja el laberinto, el bucle de juego dibujará el resto.
+            Renderer.draw(); 
+
+            if (gameState.animationFrameId) {
+                cancelAnimationFrame(gameState.animationFrameId);
+            }
+            gameState.animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+        },
+      		
+        restart: function() {
+          if (gameState.animationFrameId) {
+            cancelAnimationFrame(gameState.animationFrameId);
+            gameState.animationFrameId = null;
+          }
+          gameState.isGameRunning = false;
+          gameState.player = [...START];
+          gameState.animating = false;
+          gameState.pathQueue = [];
+          gameState.lastTime = 0;
+          
+          hideVictory(); 
+          
+          this.init(); 
+        },
+
+        gameLoop: function(timestamp) {
+            if (!gameState.isGameRunning) {
+                 return; 
+            }
+
+            if (gameState.lastTime === 0) gameState.lastTime = timestamp;
+            const deltaTime = timestamp - gameState.lastTime;
+            gameState.lastTime = timestamp;
+            
+            // 2. Lógica de Juego
+            Player.animate(deltaTime);
+            GuardManager.animate(deltaTime);
+            
+            if (Array.isArray(gameState.player)) {
+                GuardManager.checkCollision();
+                if (gameState.player[0] === END[0] && gameState.player[1] === END[1]) {
+                     this.checkWin();
+                }
+            }
+            
+            // 3. Renderizado
+            Renderer.draw(); // Dibuja el fondo y las celdas, calculando la posición de la cámara
+            Renderer.drawGuards();
+            
+            // Obtener coordenadas de celda interpoladas (r, c)
+            const { r: pr, c: pc } = Player.getInterpolatedCoords();
+            // Pasar coordenadas de celda al renderer
+            Renderer.drawPlayer(pr, pc);
+
+            // 4. Continuar el bucle 
+            gameState.animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+        },
+        
+        checkWin: async function() {
+          if (!Array.isArray(gameState.player) || gameState.player[0] !== END[0] || gameState.player[1] !== END[1]) {
+               return; 
+          }
+          
+          if (!gameState.isGameRunning) return; 
+          gameState.isGameRunning = false; 
+          if (gameState.animationFrameId) {
+            cancelAnimationFrame(gameState.animationFrameId);
+            gameState.animationFrameId = null;
+          }
+
+          let query = "";
+          const playerData = gameState.playerData;
+
+          if (playerData.sex === "masculino") { query += "female girl"; } 
+          else if (playerData.sex === "femenino") { query += "male man"; }
+          if (playerData.age < 18) { query += " k-pop star"; }
+          if (playerData.name && playerData.name.toLowerCase().startsWith("d") && playerData.age > 18) { query += " cheering with beer"; }
+          if (playerData.name && playerData.name.toLowerCase().startsWith("a") && playerData.age > 18) { query += " jehova jw "; }
+
+          const imageUrl = await this.obtenerImagenAleatoria(query);
+          const message = `¡Bien hecho, ${playerData.name}! 🎉`;
+          const message2 = `¡Nivel alcanzado, ${currentLevel}! 🎉`;
+          document.getElementById("victoryImage").src = imageUrl;
+          document.getElementById("victoryTitle").textContent = "¡Has ganado!";
+          document.getElementById("victoryMessage").textContent = message;
+          
+          document.getElementById('victoryOverlay').style.display = 'grid';
+          document.getElementById('victoryOverlay').setAttribute('aria-hidden', 'false');
+		  document.getElementById("victoryMessage").textContent = message;
+		  document.getElementById("victoryMessage").textContent = message2;
+        },
+        
+        obtenerImagenAleatoria: async function(query) {
+          const accessKey = "DPkDBZpgSOBXNLB22zj5TMwlodp0HPPAel3Qnx2SEME"; 
+          const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=30&client_id=${accessKey}`;
+
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.results && data.results.length > 0) {
+              const randomIndex = Math.floor(Math.random() * data.results.length);
+              return data.results[randomIndex].urls.regular;
+            }
+            return "https://via.placeholder.com/400x400?text=Ganaste!"; 
+          } catch (error) {
+            console.error("Error al obtener imagen:", error);
+            return "https://via.placeholder.com/400x400?text=Ganaste+Error"; 
+          }
+        }
+    };
+
+    // ====================================================================
+    // ======= ADAPTACIÓN DE INICIALIZACIÓN Y EVENTOS DE  =======
+    // ====================================================================
+
+    function startGame() {
+      if (PlayerManager.loadPlayerData()) {
+        document.getElementById('playerForm').classList.add('hidden');
+        Game.init(); 
+        document.getElementById('gameShell').focus();
+        resize();
+      } else {
+        console.log("Datos de jugador no encontrados. Esperando envío de formulario.");
+      }
+    }
+
+	function volverInicio(){
+		 gameState.player = [...START];
+            gameState.animating = false;
+            gameState.pathQueue = [];
+		}
+
+   function restartGame() {
+  const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
+  currentLevel = isNaN(savedLevel) ? 1 : savedLevel;
+  Game.restart(currentLevel); // Reinicia el juego en ese nivel
+}
+
+    const form = document.getElementById('playerForm');
+    const nameEl = document.getElementById('name');
+    const ageEl = document.getElementById('age');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('laberinto:v1:user') || '{}');
+        if (saved.name) nameEl.value = saved.name;
+        if (saved.age) ageEl.value = saved.age;
+        if (saved.sex) {
+          const r = form.querySelector(`input[name="sex"][value="${saved.sex}"]`);
+          if (r) r.checked = true;
+        }
+      } catch (_) {}
+      
+      startGame();
+    });
+
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const name = (data.get('name') || '').toString().trim();
+      const sex = data.get('sex');
+      const age = data.get('age');
+      if (!name || !sex) {
+        alert('Por favor, completa Nombre y Sexo.');
+        return;
+      }
+      PlayerManager.saveAndStartGame(name, sex, age);
+    });
+
+    const dirs = { 'U':[-1,0], 'D':[1,0], 'L':[0,-1], 'R':[0,1] }; 
+
+    function press(dir) {
+      const [dr, dc] = dirs[dir] || [0,0];
+      Game.Player.movePlayer(dr, dc);
+    }
+
+    const holdTimers = new Map();
+    function startHold(el, dir) {
+      if (!gameState.isGameRunning) return;
+      press(dir);
+      const id = setInterval(() => press(dir), 120);
+      holdTimers.set(el, id);
+    }
+    function stopHold(el) {
+      const id = holdTimers.get(el);
+      if (id) { clearInterval(id); holdTimers.delete(el); }
+    }
+
+    document.getElementById('dpad').addEventListener('pointerdown', (e) => {
+      const btn = e.target.closest('[data-dir]');
+      if (!btn) return;
+      btn.setPointerCapture(e.pointerId);
+      startHold(btn, btn.dataset.dir);
+    });
+    document.getElementById('dpad').addEventListener('pointerup', (e) => {
+      const btn = e.target.closest('[data-dir]');
+      if (!btn) return;
+      stopHold(btn);
+    });
+    document.getElementById('dpad').addEventListener('pointercancel', (e) => {
+      const btn = e.target.closest('[data-dir]');
+      if (!btn) return;
+      stopHold(btn);
+    });
+
+    let swipeStart = null;
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1 && gameState.isGameRunning) { 
+        const t = e.touches[0];
+        swipeStart = { x: t.clientX, y: t.clientY };
+      }
+    }, { passive: true });
+    canvas.addEventListener('touchend', (e) => {
+      if (!swipeStart || !gameState.isGameRunning) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - swipeStart.x;
+      const dy = t.clientY - swipeStart.y;
+      const ax = Math.abs(dx), ay = Math.abs(dy);
+      const threshold = 28; 
+      if (ax > ay && ax > threshold) press(dx > 0 ? 'R' : 'L');
+      else if (ay > ax && ay > threshold) press(dy > 0 ? 'D' : 'U');
+      swipeStart = null;
+    }, { passive: true });
+
+    window.addEventListener('keydown', (e) => {
+      if (!gameState.isGameRunning) return; 
+      const k = e.key;
+      if (k === 'ArrowUp' || k === 'w') Game.Player.movePlayer(-1, 0); 
+      else if (k === 'ArrowDown' || k === 's') Game.Player.movePlayer(1, 0); 
+      else if (k === 'ArrowLeft' || k === 'a') Game.Player.movePlayer(0, -1); 
+      else if (k === 'ArrowRight' || k === 'd') Game.Player.movePlayer(0, 1); 
+    });
+
+    document.getElementById('btnRestart').addEventListener('click', volverInicio);
+	document.getElementById('btnNewMaze').addEventListener('click', restartGame);
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+  currentLevel++;
+  localStorage.setItem("laberinto:v1:level", currentLevel);
+  restartGame(currentLevel);
+});
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Mi partida en Laberinto', text: `¡Acabo de ganar el laberinto! Jugador: ${gameState.playerData.name}`, url: location.href });
+        } catch(_){}
+      } else {
+        alert('Para compartir, copia el enlace de la barra de direcciones.');
+      }
+    });
+
+    function resize() { 
+      fitCanvasToContainer(canvas); 
+      if(gameState.isGameRunning) Game.Renderer.draw(); // Usa Game.Renderer para la llamada correcta
+    }
+    const ro = new ResizeObserver(resize);
+    ro.observe(document.getElementById('gameShell'));
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (gameState.animationFrameId) {
+          cancelAnimationFrame(gameState.animationFrameId);
+          gameState.animationFrameId = null;
+        }
+      } else {
+        if (gameState.isGameRunning && !gameState.animationFrameId) {
+          gameState.lastTime = 0; 
+          gameState.animationFrameId = requestAnimationFrame(Game.gameLoop.bind(Game));
+        }
+      }
+    });
+
+  </script>
+</body>
+</html>
