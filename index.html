@@ -285,9 +285,9 @@ const PlayerManager = {
           };
 
       // Cargar nivel desde localStorage
-          const parsedLevel = parseInt(levelData);
-          level = isNaN(parsedLevel) ? 1 : parsedLevel;
-          currentLevel = level;
+         const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
+  		 Level = isNaN(savedLevel) ? 1 : savedLevel;
+        currentLevel = level;
 
           return true;
         }
@@ -1132,9 +1132,9 @@ const PlayerManager = {
 		}
 
    function restartGame() {
-  const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
-  currentLevel = isNaN(savedLevel) ? 1 : savedLevel;
-  Game.restart(currentLevel); // Reinicia el juego en ese nivel
+  //const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
+  //currentLevel = isNaN(savedLevel) ? 1 : savedLevel;
+  Game.restart(); // Reinicia el juego en ese nivel
 }
 
     const form = document.getElementById('playerForm');
@@ -1238,7 +1238,7 @@ const PlayerManager = {
     document.getElementById('playAgainBtn').addEventListener('click', () => {
   currentLevel++;
   localStorage.setItem("laberinto:v1:level", currentLevel);
-  restartGame(currentLevel);
+  restartGame();
 });
     document.getElementById('shareBtn').addEventListener('click', async () => {
       if (navigator.share) {
@@ -1275,5 +1275,6 @@ const PlayerManager = {
 </body>
 
 </html>
+
 
 
