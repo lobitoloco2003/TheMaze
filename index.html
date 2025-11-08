@@ -213,7 +213,8 @@
     let canvas = document.getElementById('gameCanvas');
     let ctx = null; // Se inicializa en fitCanvasToContainer
     let cellSize = 0; // Calculada dinámicamente
-	let currentLevel = 1; // Valor por defecto
+	let currentLevel = 1;// Valor por defecto
+	let level=1;
     // ... (código de fitCanvasToContainer sin cambios mayores)
 
     function fitCanvasToContainer(canvas) {
@@ -260,7 +261,7 @@ function getLevelConfig(level) {
   const rows = level <= 5 ? baseRows + (level-1) * 10 : maxRows;
   const cols = baseCols + extraCols;
 
-  const arrows = 10+(level^2) * 20;
+  const arrows = 10+(level^2) * 10;
   const guards = 1+(level) * 1;
 
   return { rows, cols, arrows, guards };
@@ -286,7 +287,8 @@ const PlayerManager = {
 
       // Cargar nivel desde localStorage
          const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
-  		 Level = isNaN(savedLevel) ? 1 : savedLevel;
+  		 level = isNaN(savedLevel) ? 1 : savedLevel;
+		localStorage.setItem("laberinto:v1:level", currentLevel);	
         currentLevel = level;
 
           return true;
@@ -315,7 +317,7 @@ const PlayerManager = {
     // ====================================================================
 
     // CONFIGURACIÓN GLOBAL Y CONSTANTES
-	let level = localStorage.getItem("laberinto:v1:level");
+	let level = parseInt(localStorage.getItem("laberinto:v1:level"));
     currentLevel = level;
 	const config = getLevelConfig(currentLevel);
     const rows = config.rows;
@@ -1275,6 +1277,7 @@ const PlayerManager = {
 </body>
 
 </html>
+
 
 
 
