@@ -214,7 +214,7 @@
     let ctx = null; // Se inicializa en fitCanvasToContainer
     let cellSize = 0; // Calculada dinámicamente
 	let currentLevel = 1;// Valor por defecto
-	let level=1;
+	let level=1; 
     // ... (código de fitCanvasToContainer sin cambios mayores)
 
     function fitCanvasToContainer(canvas) {
@@ -317,7 +317,7 @@ const PlayerManager = {
     // ====================================================================
 
     // CONFIGURACIÓN GLOBAL Y CONSTANTES
-	let level = parseInt(localStorage.getItem("laberinto:v1:level"));
+	level = parseInt(localStorage.getItem("laberinto:v1:level"));
     currentLevel = level;
 	const config = getLevelConfig(currentLevel);
     const rows = config.rows;
@@ -1277,6 +1277,7 @@ const PlayerManager = {
 </body>
 
 </html>
+
 
 
 
