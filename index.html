@@ -320,17 +320,17 @@ const PlayerManager = {
     // CONFIGURACIÓN GLOBAL Y CONSTANTES
 	level = parseInt(localStorage.getItem("laberinto:v1:level"));
     currentLevel = level;
-	const config = getLevelConfig(currentLevel);
-    const rows = config.rows;
-    const cols = config.cols;
+	let config = getLevelConfig(currentLevel);
+    let rows = config.rows;
+    let cols = config.cols;
     // const canvas, ctx, cellSize -> Ahora son variables let arriba y se calculan en fitCanvasToContainer
     const START = [1, 1];
-    const END = [rows - 2, cols - 2];
+    let END = [rows - 2, cols - 2];
     const WALL_COLOR = "black";
     const PATH_COLOR = "white";
     const PLAYER_COLOR = "purple";
-    const ARROW_COUNT = config.arrows;
-	const GUARD_COUNT = config.guards;
+    let ARROW_COUNT = config.arrows;
+	let GUARD_COUNT = config.guards;
 
     // Constantes para el Viewport (Cámara) -> ¡NUEVAS CONSTANTES PARA LA CÁMARA!
     const VIEWPORT_CELLS_W = 21; // 
@@ -1075,15 +1075,17 @@ const PlayerManager = {
           let query = "";
           const playerData = gameState.playerData;
 
-          if (playerData.sex === "masculino") { query += "female girl"; } 
+          query=getSeasonalTheme()
+		  if (playerData.sex === "masculino") { query += "female girl"; } 
           else if (playerData.sex === "femenino") { query += "male man"; }
           if (playerData.age < 18) { query += " k-pop star"; }
-          if (playerData.name && playerData.name.toLowerCase().startsWith("d") && playerData.age > 18) { query += " cheering with beer"; }
-          if (playerData.name && playerData.name.toLowerCase().startsWith("a") && playerData.age > 18) { query += " jehova jw "; }
+          //if (playerData.name && playerData.name.toLowerCase().startsWith("d") && playerData.age > 18) { query += " cheering with beer"; }
+          //if (playerData.name && playerData.name.toLowerCase().startsWith("a") && playerData.age > 18) { query += " jehova jw "; }
+			
 
           const imageUrl = await this.obtenerImagenAleatoria(query);
           const message = `¡Bien hecho, ${playerData.name}! 🎉`;
-          const message2 = `¡Nivel alcanzado, ${currentLevel}! 🎉`;
+          const message2 = `¡Nivel superado, ${currentLevel}! 🎉`;
           document.getElementById("victoryImage").src = imageUrl;
           document.getElementById("victoryTitle").textContent = "¡Has ganado!";
           document.getElementById("victoryMessage").textContent = message;
@@ -1113,6 +1115,41 @@ const PlayerManager = {
         }
     };
 
+	function getSeasonalTheme() {
+  const now = new Date();
+  const month = now.getMonth(); // 0 = enero, 11 = diciembre
+  const day = now.getDate();
+
+  // 🎃 Halloween: Octubre 25–31
+  if (month === 9 && day >= 25) return "halloween";
+
+  // 🎄 Navidad: Diciembre 1–31
+  if (month === 11) return "navidad";
+
+  // 🎆 Año Nuevo: Enero 1–7
+  if (month === 0 && day <= 7) return "new year";
+
+  // 💘 San Valentín: Febrero 10–14
+  if (month === 1 && day >= 10 && day <= 14) return "san_valentin";
+
+  // 🐣 Pascua (aproximada): Abril 1–15
+  if (month === 3 && day <= 15) return "pascua";
+
+  // 🌸 Primavera: Marzo 21 – Junio 20
+  if ((month === 2 && day >= 21) || month === 3 || month === 4 || (month === 5 && day <= 20)) return "primavera";
+
+  // ☀️ Verano: Junio 21 – Septiembre 20
+  if ((month === 5 && day >= 21) || month === 6 || month === 7 || (month === 8 && day <= 20)) return "verano";
+
+  // 🍂 Otoño: Septiembre 21 – Diciembre 20
+  if ((month === 8 && day >= 21) || month === 9 || month === 10 || (month === 11 && day <= 20)) return "otoño";
+
+  // ❄️ Invierno: Diciembre 21 – Marzo 20
+  if ((month === 11 && day >= 21) || month === 0 || month === 1 || (month === 2 && day <= 20)) return "invierno";
+
+  return "normal"; // Tema por defecto
+}
+	
     // ====================================================================
     // ======= ADAPTACIÓN DE INICIALIZACIÓN Y EVENTOS DE  =======
     // ====================================================================
@@ -1137,6 +1174,12 @@ const PlayerManager = {
    function restartGame() {
   //const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
   //currentLevel = isNaN(savedLevel) ? 1 : savedLevel;
+   config = getLevelConfig(currentLevel);
+   rows = config.rows;
+   cols = config.cols;
+   END = [rows - 2, cols - 2];
+   ARROW_COUNT = config.arrows;
+   GUARD_COUNT = config.guards;
   Game.restart(); // Reinicia el juego en ese nivel
 }
 
@@ -1278,6 +1321,7 @@ const PlayerManager = {
 </body>
 
 </html>
+
 
 
 
