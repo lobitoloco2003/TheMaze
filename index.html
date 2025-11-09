@@ -262,8 +262,8 @@ function getLevelConfig(level) {
   const rows= baseRows +(level-1)*6;
 	const cols = baseCols + extraCols;
 
-  const arrows = 10+(level^2) * 15;
-  const guards = 1+(level^2) * 1;
+  let arrows = 5+(level*level) * 15;
+  let guards = 1+(level*level) * 1;
 
   return { rows, cols, arrows, guards };
 }
@@ -1322,6 +1322,7 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
 </body>
 
 </html>
+
 
 
 
