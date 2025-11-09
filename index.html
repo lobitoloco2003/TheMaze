@@ -263,7 +263,7 @@ function getLevelConfig(level) {
 	const cols = baseCols + extraCols;
 
   let arrows = 5+(level*level) * 10;
-  let guards = 1+(level*level) * 1;
+  let guards = 1+(level) * 2;
 
   return { rows, cols, arrows, guards };
 }
@@ -1336,6 +1336,7 @@ function stopAllTouchHolds() {
 </body>
 
 </html>
+
 
 
 
