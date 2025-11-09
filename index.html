@@ -786,7 +786,7 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
         return path;
       },
 
-      followArrowPath: function(r, c, arrows, isWall, isYellow) {
+     followArrowPath: function(r, c, arrows, isWall, isYellow) {
         let path = [[r, c]];
         let dir = arrows[`${r},${c}`];
         
@@ -796,6 +796,9 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
             switch (dir) { case "U": return [-1, 0]; case "D": return [1, 0]; case "L": return [0, -1]; case "R": return [0, 1]; }
         };
 
+        // AÑADIDO: Rastrear las celdas visitadas en este trayecto de flecha
+        const arrowPathVisited = new Set([`${r},${c}`]); 
+
         while (!isYellow(r, c)) {
           const nextDir = arrows[`${r},${c}`];
           if (nextDir) dir = nextDir;
@@ -804,9 +807,16 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
           const [dr, dc] = getOffset(dir);
           let nextR = r + dr;
           let nextC = c + dc;
+          const nextKey = `${nextR},${nextC}`;
 
           if (isWall(nextR, nextC)) break;
 
+          // AÑADIDO: Si detectamos que volvemos a una celda, es un bucle: ¡DETENER!
+          if (arrowPathVisited.has(nextKey)) { 
+             break;
+          }
+          arrowPathVisited.add(nextKey); 
+          
           r = nextR;
           c = nextC;
           path.push([r, c]);
@@ -1322,6 +1332,7 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
 </body>
 
 </html>
+
 
 
 
