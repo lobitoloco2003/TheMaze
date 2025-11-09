@@ -331,7 +331,7 @@ const PlayerManager = {
     const PLAYER_COLOR = "purple";
     let ARROW_COUNT = config.arrows;
 	let GUARD_COUNT = config.guards;
-
+console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
     // Constantes para el Viewport (Cámara) -> ¡NUEVAS CONSTANTES PARA LA CÁMARA!
     const VIEWPORT_CELLS_W = 21; // 
     const VIEWPORT_CELLS_H = 21; //  (Para mantener la vista cuadrada)
@@ -358,7 +358,7 @@ const PlayerManager = {
 
         init: function() {
           this.generateMap();
-          GuardManager.generateGuards(GUARD_COUNT, 28); 
+          GuardManager.generateGuards(GUARD_COUNT, 41); 
         },
 
         generateMap: function() {
@@ -1180,6 +1180,7 @@ const PlayerManager = {
    END = [rows - 2, cols - 2];
    ARROW_COUNT = config.arrows;
    GUARD_COUNT = config.guards;
+	   console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
   Game.restart(); // Reinicia el juego en ese nivel
 }
 
@@ -1321,6 +1322,7 @@ const PlayerManager = {
 </body>
 
 </html>
+
 
 
 
