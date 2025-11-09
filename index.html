@@ -257,13 +257,13 @@ function getLevelConfig(level) {
   const baseRows = 21;
   const baseCols = 21;
   const maxRows = baseRows + 10 * 5; // hasta nivel 5
-  const extraCols = level > 4 ? (level - 4) * 10 : 0;
+  const extraCols = level > 4 ? (level - 4) * 6 : 0;
   //const rows = level <= 5 ? baseRows + (level-1) * 10 : maxRows;
-  const rows= 21 +(level-1)*6;
+  const rows= baseRows +(level-1)*6;
 	const cols = baseCols + extraCols;
 
-  const arrows = 10+(level^2) * 10;
-  const guards = 1+(level) * 1;
+  const arrows = 10+(level^2) * 15;
+  const guards = 1+(level^2) * 1;
 
   return { rows, cols, arrows, guards };
 }
@@ -1321,6 +1321,7 @@ const PlayerManager = {
 </body>
 
 </html>
+
 
 
 
