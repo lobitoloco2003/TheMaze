@@ -992,6 +992,7 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
             gameState.player = [...START];
             gameState.animating = false;
             gameState.pathQueue = [];
+			stopAllTouchHolds();  
             return;
           }
         }
@@ -1244,7 +1245,10 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
       const id = holdTimers.get(el);
       if (id) { clearInterval(id); holdTimers.delete(el); }
     }
-
+function stopAllTouchHolds() {
+        holdTimers.forEach(clearInterval);
+        holdTimers.clear();
+    }
     document.getElementById('dpad').addEventListener('pointerdown', (e) => {
       const btn = e.target.closest('[data-dir]');
       if (!btn) return;
@@ -1332,6 +1336,7 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
 </body>
 
 </html>
+
 
 
 
