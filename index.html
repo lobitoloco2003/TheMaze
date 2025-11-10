@@ -1097,11 +1097,11 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
           const playerData = gameState.playerData;
 
           query=getSeasonalTheme()
-		  if (playerData.sex === "masculino") { query += " female "; } 
-          else if (playerData.sex === "femenino") { query += " male "; }
-          //if (playerData.age < 18) { query += " k-pop star"; }
-		 if (playerData.age < 18) { query += " pokemon"; }	
-          if (playerData.age > 18) { query += " cheering with beer"; }
+		  if (playerData.sex === "masculino") { query += " girl "; } 
+          else if (playerData.sex === "femenino") { query += " man "; }
+          if (playerData.age < 18) { query += " k-pop star "; }
+		 //if (playerData.age < 18) { query += " pokemon"; }	
+          //if (playerData.age > 18) { query += " cheering with beer"; }
           //if (playerData.name && playerData.name.toLowerCase().startsWith("a") && playerData.age > 18) { query += " jehova jw "; }
 			
 
@@ -1348,6 +1348,7 @@ function stopAllTouchHolds() {
 </body>
 
 </html>
+
 
 
 
