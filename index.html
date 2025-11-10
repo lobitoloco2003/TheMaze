@@ -254,8 +254,8 @@
       const overlay = document.getElementById('victoryOverlay');
       overlay.style.display = 'none';
       overlay.setAttribute('aria-hidden', 'true');
-  const dpap = document.getElementById('dpap');
-  if (dpap) dpap.style.display = 'block'; // or 'flex';
+  const dpad = document.getElementById('dpad');
+  if (dpad) dpad.style.display = 'block'; // or 'flex';
     }
 
 function getLevelConfig(level) {
@@ -1114,8 +1114,8 @@ console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
           
           document.getElementById('victoryOverlay').style.display = 'grid';
           document.getElementById('victoryOverlay').setAttribute('aria-hidden', 'false');		
-const dpap = document.getElementById('dpap');
-  if (dpap) dpap.style.display = 'none';	
+const dpad = document.getElementById('dpad');
+  if (dpad) dpad.style.display = 'none';	
 		  document.getElementById("victoryMessage").textContent = message;
 		  document.getElementById("victoryMessage").textContent = message2;
         },
@@ -1349,6 +1349,7 @@ function stopAllTouchHolds() {
 </body>
 
 </html>
+
 
 
 
