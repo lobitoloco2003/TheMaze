@@ -321,6 +321,7 @@ const PlayerManager = {
 	level = parseInt(localStorage.getItem("laberinto:v1:level"));
     currentLevel = level;
 	let config = getLevelConfig(currentLevel);
+	config = isNaN(config) ? 1 : config;
     let rows = config.rows;
     let cols = config.cols;
     // const canvas, ctx, cellSize -> Ahora son variables let arriba y se calculan en fitCanvasToContainer
@@ -1336,6 +1337,7 @@ function stopAllTouchHolds() {
 </body>
 
 </html>
+
 
 
 
