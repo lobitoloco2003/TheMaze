@@ -326,7 +326,6 @@ const PlayerManager = {
 	level = isNaN(level) ? 1 : level;
     currentLevel = level;
 	let config = getLevelConfig(currentLevel);
-	config = isNaN(config) ? 1 : config;
     let rows = config.rows;
 	rows=isNaN(rows) ? 21 : rows;
     let cols = config.cols;
@@ -338,9 +337,9 @@ const PlayerManager = {
     const PATH_COLOR = "white";
     const PLAYER_COLOR = "purple";
     let ARROW_COUNT = config.arrows;
-	isNaN(ARROW_COUNT) ? 21 : ARROW_COUNT;
+	ARROW_COUNT=isNaN(ARROW_COUNT) ? 21 : ARROW_COUNT;
 	let GUARD_COUNT = config.guards;
-	isNaN(GUARD_COUNT) ? 1 : GUARD_COUNT;
+	GUARD_COUNT=isNaN(GUARD_COUNT) ? 1 : GUARD_COUNT;
 console.log(level,rows,cols,ARROW_COUNT,GUARD_COUNT);
     // Constantes para el Viewport (Cámara) -> ¡NUEVAS CONSTANTES PARA LA CÁMARA!
     const VIEWPORT_CELLS_W = 21; // 
@@ -1346,6 +1345,7 @@ function stopAllTouchHolds() {
 </body>
 
 </html>
+
 
 
 
