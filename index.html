@@ -214,9 +214,12 @@
     let ctx = null; // Se inicializa en fitCanvasToContainer
     let cellSize = 0; // Calculada dinámicamente
 	let currentLevel = 1;// Valor por defecto
-	let level=1; 
-    // ... (código de fitCanvasToContainer sin cambios mayores)
-
+	let level=1;
+	 // Cargar nivel desde localStorage
+         const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
+  		 level = isNaN(savedLevel) ? 1 : savedLevel;
+		localStorage.setItem("laberinto:v1:level", level);	
+        curentLevel=level;
     function fitCanvasToContainer(canvas) {
       const ratio = window.devicePixelRatio || 1;
       const { width, height } = canvas.getBoundingClientRect();
@@ -1337,6 +1340,7 @@ function stopAllTouchHolds() {
 </body>
 
 </html>
+
 
 
 
