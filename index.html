@@ -219,7 +219,7 @@
          const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
   		 level = isNaN(savedLevel) ? 1 : savedLevel;
 		localStorage.setItem("laberinto:v1:level", level);	
-        curentLevel=level;
+        currentLevel=level;
     function fitCanvasToContainer(canvas) {
       const ratio = window.devicePixelRatio || 1;
       const { width, height } = canvas.getBoundingClientRect();
@@ -293,7 +293,7 @@ const PlayerManager = {
          const savedLevel = parseInt(localStorage.getItem("laberinto:v1:level"));
   		 level = isNaN(savedLevel) ? 1 : savedLevel;
 		localStorage.setItem("laberinto:v1:level", level);	
-        curentLevel=level;
+        currentLevel=level;
 
           return true;
         }
@@ -322,6 +322,7 @@ const PlayerManager = {
 
     // CONFIGURACIÓN GLOBAL Y CONSTANTES
 	level = parseInt(localStorage.getItem("laberinto:v1:level"));
+	level = isNaN(level) ? 1 : level;
     currentLevel = level;
 	let config = getLevelConfig(currentLevel);
 	config = isNaN(config) ? 1 : config;
@@ -1340,6 +1341,7 @@ function stopAllTouchHolds() {
 </body>
 
 </html>
+
 
 
 
